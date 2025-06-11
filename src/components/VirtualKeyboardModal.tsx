@@ -1,25 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Keyboard, X, ZoomIn, ZoomOut } from "lucide-react";
-import { KeyboardKey } from "@/lib/virtualKeyboardDetector";
 
 interface VirtualKeyboardModalProps {
   onKeyPress: (key: string) => void;
   children: React.ReactNode;
-  gestureState?: {
-    fingerPosition: { x: number; y: number } | null;
-    hoveredKey: string | null;
-    hoverProgress: number;
-    currentGesture: string;
-  };
 }
 
-const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKeyboardModalProps) => {
+const VirtualKeyboardModal = ({ onKeyPress, children }: VirtualKeyboardModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [size, setSize] = useState<'tiny' | 'small' | 'medium' | 'large'>('large');
-  const [keyboardKeys, setKeyboardKeys] = useState<KeyboardKey[]>([]);
+  const [size, setSize] = useState<'small' | 'medium' | 'large'>('large');
 
   const keyboardLayout = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -33,12 +25,6 @@ const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKey
 
   const getSizeClasses = () => {
     switch (size) {
-      case 'tiny':
-        return {
-          button: 'min-w-6 h-6 text-xs',
-          gap: 'gap-1',
-          spacing: 'space-y-1'
-        };
       case 'small':
         return {
           button: 'min-w-8 h-8 text-sm',
@@ -60,50 +46,7 @@ const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKey
     }
   };
 
-  // Update keyboard layout for gesture recognition when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      // Calculate key positions for gesture detection
-      setTimeout(() => {
-        const keys: KeyboardKey[] = [];
-        const keyElements = document.querySelectorAll('[data-key]');
-        
-        keyElements.forEach((element) => {
-          const rect = element.getBoundingClientRect();
-          const key = element.getAttribute('data-key');
-          if (key) {
-            keys.push({
-              key: key,
-              x: rect.left,
-              y: rect.top,
-              width: rect.width,
-              height: rect.height
-            });
-          }
-        });
-        
-        setKeyboardKeys(keys);
-        
-        // Notify parent component about keyboard layout
-        if (window.updateKeyboardLayout) {
-          window.updateKeyboardLayout(keys);
-        }
-      }, 100);
-    }
-  }, [isOpen, size]);
-
   const sizeClasses = getSizeClasses();
-
-  const getKeyStyle = (key: string) => {
-    const isHovered = gestureState?.hoveredKey === key.toLowerCase();
-    const baseStyle = `glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow ${sizeClasses.button} transition-all duration-200`;
-    
-    if (isHovered && gestureState?.currentGesture === 'point') {
-      return `${baseStyle} bg-cyber-primary/30 cyber-glow border-cyber-primary`;
-    }
-    
-    return baseStyle;
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -117,24 +60,9 @@ const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKey
             <h2 className="text-xl font-semibold cyber-font text-cyber-primary">
               Virtual Keyboard
             </h2>
-            {gestureState?.currentGesture && (
-              <div className="ml-4 px-2 py-1 bg-cyber-dark/50 rounded border border-cyber-primary/20">
-                <span className="text-xs text-cyber-primary font-mono">
-                  {gestureState.currentGesture.toUpperCase()}
-                </span>
-              </div>
-            )}
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSize('tiny')}
-              className={`p-2 ${size === 'tiny' ? 'text-cyber-primary' : 'text-gray-400'}`}
-            >
-              <span className="text-xs">XS</span>
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -176,17 +104,11 @@ const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKey
               {row.map((key) => (
                 <Button
                   key={key}
-                  data-key={key.toLowerCase()}
                   variant="outline"
                   onClick={() => handleKeyClick(key)}
-                  className={getKeyStyle(key)}
+                  className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow ${sizeClasses.button} transition-all duration-200`}
                 >
                   {key}
-                  {gestureState?.hoveredKey === key.toLowerCase() && gestureState?.hoverProgress > 0 && (
-                    <div className="absolute inset-0 bg-cyber-primary opacity-20 rounded-md" 
-                         style={{ width: `${gestureState.hoverProgress}%` }}>
-                    </div>
-                  )}
                 </Button>
               ))}
             </div>
@@ -195,57 +117,34 @@ const VirtualKeyboardModal = ({ onKeyPress, children, gestureState }: VirtualKey
           {/* Special keys */}
           <div className={`flex justify-center ${sizeClasses.gap} mt-4`}>
             <Button
-              data-key="space"
               variant="outline"
               onClick={() => onKeyPress('SPACE')}
-              className={`${getKeyStyle('space')} flex-1 max-w-md relative`}
+              className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 max-w-md ${sizeClasses.button}`}
             >
               SPACE
-              {gestureState?.hoveredKey === 'space' && gestureState?.hoverProgress > 0 && (
-                <div className="absolute inset-0 bg-cyber-primary opacity-20 rounded-md" 
-                     style={{ width: `${gestureState.hoverProgress}%` }}>
-                </div>
-              )}
             </Button>
           </div>
 
           <div className={`flex justify-center ${sizeClasses.gap}`}>
             <Button
-              data-key="backspace"
               variant="outline"
               onClick={() => onKeyPress('BACKSPACE')}
-              className={`${getKeyStyle('backspace')} flex-1 max-w-xs relative`}
+              className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 max-w-xs ${sizeClasses.button}`}
             >
               ⌫ BACK
-              {gestureState?.hoveredKey === 'backspace' && gestureState?.hoverProgress > 0 && (
-                <div className="absolute inset-0 bg-cyber-primary opacity-20 rounded-md" 
-                     style={{ width: `${gestureState.hoverProgress}%` }}>
-                </div>
-              )}
             </Button>
             <Button
-              data-key="enter"
               variant="outline"
               onClick={() => onKeyPress('ENTER')}
-              className={`${getKeyStyle('enter')} flex-1 max-w-xs relative`}
+              className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 max-w-xs ${sizeClasses.button}`}
             >
               ↵ ENTER
-              {gestureState?.hoveredKey === 'enter' && gestureState?.hoverProgress > 0 && (
-                <div className="absolute inset-0 bg-cyber-primary opacity-20 rounded-md" 
-                     style={{ width: `${gestureState.hoverProgress}%` }}>
-                </div>
-              )}
             </Button>
           </div>
         </div>
 
         <div className="mt-6 text-sm text-gray-400 text-center">
           Use gestures or click keys to type • Point gesture hovers • Fist for backspace • Peace for space
-          {gestureState?.hoveredKey && (
-            <div className="mt-2 text-cyber-primary">
-              Hovering: {gestureState.hoveredKey.toUpperCase()} ({Math.round(gestureState.hoverProgress)}%)
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
