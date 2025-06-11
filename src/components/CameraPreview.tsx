@@ -5,7 +5,6 @@ import { Eye, EyeOff, Camera, Wifi } from "lucide-react";
 
 interface CameraPreviewProps {
   isTracking: boolean;
-  handDetected: boolean;
 }
 
 declare global {
@@ -25,7 +24,9 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
   const handsRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
 
- 
+  useEffect(() => {
+    if (!isTracking) return;
+
     if (!window.Hands || !window.Camera) {
       console.error("MediaPipe scripts not loaded.");
       return;
@@ -43,48 +44,42 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
       minTrackingConfidence: 0.7,
     });
 
-   hands.onResults((results: any) => {
-  console.log("🔥 MediaPipe onResults triggered!");
+    hands.onResults((results: any) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!ctx || !canvas) return;
 
-  if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-    console.log("🚫 No hand landmarks");
-    setHandDetected(false);
-    return;
-  }
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-  setHandDetected(true);
-  const canvas = canvasRef.current;
-  const ctx = canvas?.getContext("2d");
-  if (!ctx || !canvas) return;
+      if (
+        results.multiHandLandmarks &&
+        results.multiHandLandmarks.length > 0
+      ) {
+        setHandDetected(true);
+        const landmarks = results.multiHandLandmarks[0];
+        const gesture = classifyGesture(landmarks);
+        console.log("✋ Gesture Detected:", gesture);
 
-  ctx.save();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
+          color: "#00FF00",
+          lineWidth: 2,
+        });
+        window.drawLandmarks(ctx, landmarks, {
+          color: "#FF0000",
+          lineWidth: 1,
+        });
+      } else {
+        setHandDetected(false);
+      }
 
-  const landmarks = results.multiHandLandmarks[0]; // just test first hand
-  console.log("🖐️ Hand landmarks detected:", landmarks);
-
-  const gesture = classifyGesture(landmarks);
-  console.log("👉 Gesture Detected:", gesture);
-
-  window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
-    color: "#00FF00",
-    lineWidth: 2,
-  });
-  window.drawLandmarks(ctx, landmarks, {
-    color: "#FF0000",
-    lineWidth: 1,
-  });
-
-  ctx.restore();
-});
-
+      ctx.restore();
+    });
 
     const camera = new window.Camera(videoRef.current, {
       onFrame: async () => {
-        console.log("Sending frame to hands");
         await hands.send({ image: videoRef.current });
-        
       },
       width: 640,
       height: 480,
