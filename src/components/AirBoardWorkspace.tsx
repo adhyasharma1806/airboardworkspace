@@ -3,11 +3,13 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, Eye, Settings, Zap, Save, FileText } from "lucide-react";
+import { ArrowLeft, Download, Eye, Settings, Zap, Save, FileText, User, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import VirtualKeyboard from "./VirtualKeyboard";
 import CameraPreview from "./CameraPreview";
 import GestureControls from "./GestureControls";
+import SignInDialog from "./SignInDialog";
+import AirBoardBrowser from "./AirBoardBrowser";
 
 interface AirBoardWorkspaceProps {
   onBack: () => void;
@@ -17,6 +19,8 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [content, setContent] = useState('');
   const [isTracking, setIsTracking] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(true);
+  const [keyboardSize, setKeyboardSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [showBrowser, setShowBrowser] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -96,6 +100,15 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowBrowser(true)}
+              className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Browser
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={toggleTracking}
               className={`glass-morphism border-cyber-primary/30 ${
                 isTracking ? 'text-green-400 border-green-400/30' : 'text-cyber-primary'
@@ -112,6 +125,16 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
             >
               <Settings className="w-4 h-4" />
             </Button>
+            <SignInDialog>
+              <Button
+                variant="outline"
+                size="sm"
+                className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </SignInDialog>
           </div>
         </div>
       </header>
@@ -174,10 +197,21 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
 
           {/* Virtual Keyboard */}
           {showKeyboard && (
-            <VirtualKeyboard onKeyPress={handleKeyPress} />
+            <VirtualKeyboard 
+              onKeyPress={handleKeyPress} 
+              size={keyboardSize}
+              onSizeChange={setKeyboardSize}
+            />
           )}
         </div>
       </div>
+
+      {/* AirBoard Browser */}
+      <AirBoardBrowser 
+        isOpen={showBrowser} 
+        onClose={() => setShowBrowser(false)}
+        isTracking={isTracking}
+      />
     </div>
   );
 };
