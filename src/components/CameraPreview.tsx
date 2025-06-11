@@ -1,3 +1,4 @@
+import { classifyGesture } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Camera, Wifi } from "lucide-react";
@@ -65,6 +66,9 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
             color: "#00FF00",
             lineWidth: 2,
           });
+          const gesture = classifyGesture(landmarks);
+console.log("Gesture Detected:", gesture);
+
           window.drawLandmarks(ctx, landmarks, {
             color: "#FF0000",
             lineWidth: 1,
