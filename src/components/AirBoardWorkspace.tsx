@@ -1,11 +1,12 @@
+
 import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, Eye, Settings, Zap, FileText, User, Globe } from "lucide-react";
+import { ArrowLeft, Download, Eye, Settings, Zap, FileText, User, Globe, Keyboard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import VirtualKeyboard from "./VirtualKeyboard";
-import CameraPreview from "./CameraPreview";
+import VirtualKeyboardModal from "./VirtualKeyboardModal";
+import CameraPreviewSimple from "./CameraPreviewSimple";
 import GestureControls from "./GestureControls";
 import SignInDialog from "./SignInDialog";
 import AirBoardBrowser from "./AirBoardBrowser";
@@ -17,8 +18,6 @@ interface AirBoardWorkspaceProps {
 const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [content, setContent] = useState('');
   const [isTracking, setIsTracking] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(true);
-  const [keyboardSize, setKeyboardSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showBrowser, setShowBrowser] = useState(false);
   const [currentGesture, setCurrentGesture] = useState<string>('none');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -134,6 +133,17 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            <VirtualKeyboardModal onKeyPress={handleKeyPress}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+              >
+                <Keyboard className="w-4 h-4 mr-2" />
+                Keyboard
+              </Button>
+            </VirtualKeyboardModal>
+            
             <Button
               variant="outline"
               size="sm"
@@ -143,6 +153,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               <Globe className="w-4 h-4 mr-2" />
               Browser
             </Button>
+            
             <Button
               variant="outline"
               size="sm"
@@ -154,14 +165,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               <Eye className="w-4 h-4 mr-2" />
               {isTracking ? 'Tracking ON' : 'Tracking OFF'}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowKeyboard(!showKeyboard)}
-              className="glass-morphism border-cyber-primary/30 text-cyber-primary"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            
             <SignInDialog>
               <Button
                 variant="outline"
@@ -210,7 +214,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing with gestures or use the virtual keyboard below..."
+              placeholder="Start typing with gestures or use the virtual keyboard..."
               className="w-full h-[calc(100%-80px)] bg-cyber-dark/50 border-cyber-primary/30 text-foreground placeholder:text-gray-400 resize-none text-lg leading-relaxed focus:border-cyber-primary cyber-glow"
             />
 
@@ -227,7 +231,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
         {/* Sidebar */}
         <div className="w-80 p-6 space-y-6">
           {/* Camera Preview with Gesture Recognition */}
-          <CameraPreview 
+          <CameraPreviewSimple
             isTracking={isTracking}
             onGestureDetected={handleGestureChange}
             onKeyType={handleGestureKeyType}
@@ -237,15 +241,6 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
 
           {/* Gesture Controls */}
           <GestureControls />
-
-          {/* Virtual Keyboard */}
-          {showKeyboard && (
-            <VirtualKeyboard 
-              onKeyPress={handleKeyPress} 
-              size={keyboardSize}
-              onSizeChange={setKeyboardSize}
-            />
-          )}
         </div>
       </div>
 
