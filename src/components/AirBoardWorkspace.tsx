@@ -32,6 +32,29 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
     }
   }, []);
 
+  // Handle gesture detection from camera
+  const handleGestureDetected = useCallback((gesture: string) => {
+    switch (gesture) {
+      case 'fist':
+        // Backspace
+        setContent(prev => prev.slice(0, -1));
+        break;
+      case 'peace':
+        // Space
+        setContent(prev => prev + ' ');
+        break;
+      case 'point':
+        // Could trigger typing mode or specific character
+        // For now, let's add a dot as example
+        setContent(prev => prev + '.');
+        break;
+      case 'palm':
+        // Enter/new line
+        setContent(prev => prev + '\n');
+        break;
+    }
+  }, []);
+
   const handleExport = (format: 'txt' | 'pdf') => {
     if (!content.trim()) {
       toast({
@@ -67,12 +90,20 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   };
 
   const toggleTracking = () => {
-    setIsTracking(!isTracking);
+    const newState = !isTracking;
+    setIsTracking(newState);
     toast({
-      title: isTracking ? "Tracking stopped" : "Tracking started",
-      description: isTracking ? "Hand tracking has been disabled." : "Hand tracking is now active."
+      title: newState ? "Starting tracking..." : "Tracking stopped",
+      description: newState ? "Hand tracking is initializing." : "Hand tracking has been disabled."
     });
   };
+
+  const handleTrackingChange = useCallback((actuallyTracking: boolean) => {
+    if (actuallyTracking !== isTracking) {
+      // Sync internal state with actual tracking state
+      setIsTracking(actuallyTracking);
+    }
+  }, [isTracking]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyber-darker via-cyber-dark to-cyber-light">
@@ -158,7 +189,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               <span>{content.length} characters • {content.split(/\s+/).filter(Boolean).length} words</span>
               <span className="flex items-center">
                 <Zap className="w-4 h-4 mr-1 text-cyber-primary" />
-                Real-time sync enabled
+                Real-time gesture input
               </span>
             </div>
           </Card>
@@ -167,7 +198,11 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
         {/* Sidebar */}
         <div className="w-80 p-6 space-y-6">
           {/* Camera Preview */}
-          <CameraPreview isTracking={isTracking} />
+          <CameraPreview 
+            isTracking={isTracking} 
+            onTrackingChange={handleTrackingChange}
+            onGestureDetected={handleGestureDetected}
+          />
 
           {/* Gesture Controls */}
           <GestureControls />
