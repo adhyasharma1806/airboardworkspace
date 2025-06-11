@@ -84,7 +84,9 @@ console.log("Gesture Detected:", gesture);
 
     const camera = new window.Camera(videoRef.current, {
       onFrame: async () => {
+        console.log("Sending frame to hands");
         await hands.send({ image: videoRef.current });
+        
       },
       width: 640,
       height: 480,
