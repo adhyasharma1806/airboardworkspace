@@ -51,6 +51,7 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
     });
 
     hands.onResults((results: any) => {
+      console.log("onResults triggered", results);
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!ctx || !canvas) return;
