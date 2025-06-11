@@ -1,38 +1,15 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Zap, Hand, Eye, FileText, Cpu, Sparkles, User } from "lucide-react";
+import { Zap, Hand, Eye, FileText, Cpu, Sparkles } from "lucide-react";
 import AirBoardWorkspace from "@/components/AirBoardWorkspace";
-import SignIn from "@/components/SignIn";
 
 const Index = () => {
   const [showWorkspace, setShowWorkspace] = useState(false);
-  const [showSignIn, setShowSignIn] = useState(false);
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null);
-
-  const handleSignIn = (userData: { email: string; name: string }) => {
-    setUser(userData);
-    setShowSignIn(false);
-    setShowWorkspace(true);
-  };
-
-  const handleSignOut = () => {
-    setUser(null);
-    setShowWorkspace(false);
-  };
-
-  if (showSignIn) {
-    return <SignIn onSignIn={handleSignIn} onBack={() => setShowSignIn(false)} />;
-  }
 
   if (showWorkspace) {
-    return (
-      <AirBoardWorkspace 
-        onBack={() => setShowWorkspace(false)} 
-        user={user}
-        onSignOut={handleSignOut}
-      />
-    );
+    return <AirBoardWorkspace onBack={() => setShowWorkspace(false)} />;
   }
 
   return (
@@ -64,20 +41,10 @@ const Index = () => {
             </div>
             <h1 className="text-2xl font-bold cyber-font text-glow">AirBoard</h1>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowSignIn(true)}
-              className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/10"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
-            <Button variant="outline" className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/10">
-              <Eye className="w-4 h-4 mr-2" />
-              Camera Status
-            </Button>
-          </div>
+          <Button variant="outline" className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/10">
+            <Eye className="w-4 h-4 mr-2" />
+            Camera Status
+          </Button>
         </header>
 
         {/* Hero Section */}
