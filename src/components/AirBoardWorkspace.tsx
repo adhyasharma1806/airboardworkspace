@@ -267,6 +267,10 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
               onSizeChange={setKeyboardSize}
             />
           )}
+          <div className="hidden">
+    <video ref={videoRef} autoPlay playsInline muted />
+    <canvas ref={canvasRef} width={640} height={480} />
+  </div>
           
 
         </div>
