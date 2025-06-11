@@ -19,6 +19,7 @@ interface AirBoardWorkspaceProps {
 const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [content, setContent] = useState('');
   const [isTracking, setIsTracking] = useState(false);
+  const [handDetected, setHandDetected] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [keyboardSize, setKeyboardSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showBrowser, setShowBrowser] = useState(false);
@@ -106,23 +107,28 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
     ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      const landmarks = results.multiHandLandmarks[0];
-      const gesture = classifyGesture(landmarks);
-      console.log("✋ Gesture Detected:", gesture);
+  setHandDetected(true); // 👈 real-time UI trigger
 
-      if (gesture === "Fist") handleKeyPress("BACKSPACE");
-      else if (gesture === "Peace") handleKeyPress("SPACE");
-      else if (gesture === "Point") handleKeyPress("A"); // you can improve this later
+  const landmarks = results.multiHandLandmarks[0];
+  const gesture = classifyGesture(landmarks);
+  console.log("✋ Gesture Detected:", gesture);
 
-      window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
-        color: "#00FF00",
-        lineWidth: 2,
-      });
-      window.drawLandmarks(ctx, landmarks, {
-        color: "#FF0000",
-        lineWidth: 1,
-      });
-    }
+  if (gesture === "Fist") handleKeyPress("BACKSPACE");
+  else if (gesture === "Peace") handleKeyPress("SPACE");
+  else if (gesture === "Point") handleKeyPress("A");
+
+  window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
+    color: "#00FF00",
+    lineWidth: 2,
+  });
+  window.drawLandmarks(ctx, landmarks, {
+    color: "#FF0000",
+    lineWidth: 1,
+  });
+} else {
+  setHandDetected(false); // 👈 hide UI when hand not seen
+}
+
 
     ctx.restore();
   });
