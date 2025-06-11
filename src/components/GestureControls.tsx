@@ -1,6 +1,5 @@
-
 import { Card } from "@/components/ui/card";
-import { Hand, RotateCcw, Zap, Peace, Move } from "lucide-react";
+import { Hand, RotateCcw, Zap, Move } from "lucide-react";
 
 const GestureControls = () => {
   const gestures = [
@@ -17,7 +16,7 @@ const GestureControls = () => {
       keys: "Backspace"
     },
     {
-      icon: Peace,
+      icon: Hand,
       name: "Peace",
       description: "Add space",
       keys: "Space"
