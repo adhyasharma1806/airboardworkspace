@@ -20,6 +20,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [keyboardSize, setKeyboardSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showBrowser, setShowBrowser] = useState(false);
+  const [currentGesture, setCurrentGesture] = useState<string>('none');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -33,6 +34,37 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
     } else {
       setContent(prev => prev + key);
     }
+  }, []);
+
+  const handleGestureKeyType = useCallback((key: string) => {
+    handleKeyPress(key);
+    toast({
+      title: "Gesture typing",
+      description: `Typed: ${key}`,
+      duration: 1000
+    });
+  }, [handleKeyPress, toast]);
+
+  const handleGestureBackspace = useCallback(() => {
+    setContent(prev => prev.slice(0, -1));
+    toast({
+      title: "Gesture action",
+      description: "Backspace (Fist gesture)",
+      duration: 1000
+    });
+  }, [toast]);
+
+  const handleGestureSpace = useCallback(() => {
+    setContent(prev => prev + ' ');
+    toast({
+      title: "Gesture action", 
+      description: "Space (Peace gesture)",
+      duration: 1000
+    });
+  }, [toast]);
+
+  const handleGestureChange = useCallback((gesture: string) => {
+    setCurrentGesture(gesture);
   }, []);
 
   const handleExport = (format: 'txt' | 'pdf') => {
@@ -92,6 +124,13 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               Back
             </Button>
             <h1 className="text-xl font-bold cyber-font text-glow">AirBoard Workspace</h1>
+            {/* Gesture Status Indicator */}
+            <div className="flex items-center space-x-2 px-3 py-1 bg-cyber-dark/50 rounded border border-cyber-primary/20">
+              <div className="text-xs text-gray-400">Gesture:</div>
+              <div className="text-xs text-cyber-primary font-mono uppercase">
+                {currentGesture}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -187,8 +226,14 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
 
         {/* Sidebar */}
         <div className="w-80 p-6 space-y-6">
-          {/* Camera Preview */}
-          <CameraPreview isTracking={isTracking} />
+          {/* Camera Preview with Gesture Recognition */}
+          <CameraPreview 
+            isTracking={isTracking}
+            onGestureDetected={handleGestureChange}
+            onKeyType={handleGestureKeyType}
+            onBackspace={handleGestureBackspace}
+            onSpace={handleGestureSpace}
+          />
 
           {/* Gesture Controls */}
           <GestureControls />
@@ -215,5 +260,3 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
 };
 
 export default AirBoardWorkspace;
-
-
