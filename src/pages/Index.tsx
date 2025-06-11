@@ -1,12 +1,14 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Zap, Hand, Eye, FileText, Cpu, Sparkles } from "lucide-react";
+import { Zap, Hand, Eye, FileText, Cpu, Sparkles, User, Globe } from "lucide-react";
 import AirBoardWorkspace from "@/components/AirBoardWorkspace";
+import SignInDialog from "@/components/SignInDialog";
+import AirBoardBrowser from "@/components/AirBoardBrowser";
 
 const Index = () => {
   const [showWorkspace, setShowWorkspace] = useState(false);
+  const [showBrowser, setShowBrowser] = useState(false);
 
   if (showWorkspace) {
     return <AirBoardWorkspace onBack={() => setShowWorkspace(false)} />;
@@ -35,12 +37,39 @@ const Index = () => {
       <div className="relative z-10">
         {/* Header */}
         <header className="p-6 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-cyber-gradient rounded-lg flex items-center justify-center cyber-glow">
-              <Hand className="w-6 h-6 text-white" />
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-cyber-gradient rounded-lg flex items-center justify-center cyber-glow">
+                <Hand className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold cyber-font text-glow">AirBoard</h1>
             </div>
-            <h1 className="text-2xl font-bold cyber-font text-glow">AirBoard</h1>
+            
+            {/* Sign In and Browser buttons */}
+            <div className="flex items-center space-x-3">
+              <SignInDialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </SignInDialog>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBrowser(true)}
+                className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Browser
+              </Button>
+            </div>
           </div>
+          
           <Button variant="outline" className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/10">
             <Eye className="w-4 h-4 mr-2" />
             Camera Status
@@ -167,6 +196,13 @@ const Index = () => {
           </div>
         </section>
       </div>
+
+      {/* AirBoard Browser */}
+      <AirBoardBrowser 
+        isOpen={showBrowser} 
+        onClose={() => setShowBrowser(false)}
+        isTracking={false}
+      />
     </div>
   );
 };
