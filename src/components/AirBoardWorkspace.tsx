@@ -260,7 +260,8 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
         {/* Sidebar */}
         <div className="w-80 p-6 space-y-6">
           {/* Camera Preview */}
-          <CameraPreview isTracking={isTracking} />
+          <CameraPreview isTracking={isTracking} handDetected={handDetected} />
+
 
           {/* Gesture Controls */}
           <GestureControls />
