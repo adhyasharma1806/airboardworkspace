@@ -1,4 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useEffect } from "react";
+import { classifyGesture } from "@/lib/utils"; 
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +23,9 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [keyboardSize, setKeyboardSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showBrowser, setShowBrowser] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const { toast } = useToast();
 
   const handleKeyPress = useCallback((key: string) => {
@@ -76,6 +81,66 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
       description: isTracking ? "Hand tracking has been disabled." : "Hand tracking is now active."
     });
   };
+  useEffect(() => {
+  if (!isTracking) return;
+
+  const hands = new window.Hands({
+    locateFile: (file: string) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+  });
+
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7,
+  });
+
+  hands.onResults((results: any) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!ctx || !canvas) return;
+
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      const landmarks = results.multiHandLandmarks[0];
+      const gesture = classifyGesture(landmarks);
+      console.log("✋ Gesture Detected:", gesture);
+
+      if (gesture === "Fist") handleKeyPress("BACKSPACE");
+      else if (gesture === "Peace") handleKeyPress("SPACE");
+      else if (gesture === "Point") handleKeyPress("A"); // you can improve this later
+
+      window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
+        color: "#00FF00",
+        lineWidth: 2,
+      });
+      window.drawLandmarks(ctx, landmarks, {
+        color: "#FF0000",
+        lineWidth: 1,
+      });
+    }
+
+    ctx.restore();
+  });
+
+  const camera = new window.Camera(videoRef.current, {
+    onFrame: async () => {
+      await hands.send({ image: videoRef.current });
+    },
+    width: 640,
+    height: 480,
+  });
+
+  camera.start();
+  return () => {
+    camera.stop();
+  };
+}, [isTracking, handleKeyPress]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyber-darker via-cyber-dark to-cyber-light">
@@ -202,6 +267,11 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               onSizeChange={setKeyboardSize}
             />
           )}
+          <div className="hidden">
+  <video ref={videoRef} autoPlay playsInline muted />
+  <canvas ref={canvasRef} width={640} height={480} />
+</div>
+
         </div>
       </div>
 
