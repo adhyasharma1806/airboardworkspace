@@ -10,6 +10,7 @@ import CameraPreviewSimple from "./CameraPreviewSimple";
 import GestureControls from "./GestureControls";
 import SignInDialog from "./SignInDialog";
 import AirBoardBrowser from "./AirBoardBrowser";
+import { GestureRecognitionState } from "@/hooks/useGestureRecognition";
 
 interface AirBoardWorkspaceProps {
   onBack: () => void;
@@ -19,7 +20,13 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
   const [content, setContent] = useState('');
   const [isTracking, setIsTracking] = useState(false);
   const [showBrowser, setShowBrowser] = useState(false);
-  const [currentGesture, setCurrentGesture] = useState<string>('none');
+  const [gestureState, setGestureState] = useState<GestureRecognitionState>({
+    currentGesture: 'none',
+    fingerPosition: null,
+    hoveredKey: null,
+    hoverProgress: 0,
+    isHandDetected: false
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -62,8 +69,8 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
     });
   }, [toast]);
 
-  const handleGestureChange = useCallback((gesture: string) => {
-    setCurrentGesture(gesture);
+  const handleGestureStateUpdate = useCallback((newState: GestureRecognitionState) => {
+    setGestureState(newState);
   }, []);
 
   const handleExport = (format: 'txt' | 'pdf') => {
@@ -127,13 +134,16 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
             <div className="flex items-center space-x-2 px-3 py-1 bg-cyber-dark/50 rounded border border-cyber-primary/20">
               <div className="text-xs text-gray-400">Gesture:</div>
               <div className="text-xs text-cyber-primary font-mono uppercase">
-                {currentGesture}
+                {gestureState.currentGesture}
               </div>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
-            <VirtualKeyboardModal onKeyPress={handleKeyPress}>
+            <VirtualKeyboardModal 
+              onKeyPress={handleKeyPress}
+              gestureState={gestureState}
+            >
               <Button
                 variant="outline"
                 size="sm"
@@ -233,7 +243,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
           {/* Camera Preview with Gesture Recognition */}
           <CameraPreviewSimple
             isTracking={isTracking}
-            onGestureDetected={handleGestureChange}
+            onGestureDetected={handleGestureStateUpdate}
             onKeyType={handleGestureKeyType}
             onBackspace={handleGestureBackspace}
             onSpace={handleGestureSpace}

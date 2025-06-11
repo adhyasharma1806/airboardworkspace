@@ -1,5 +1,6 @@
 
 import { useRef, useEffect, useCallback } from 'react';
+import { KeyboardKey } from '@/lib/virtualKeyboardDetector';
 
 declare global {
   interface Window {
@@ -8,6 +9,7 @@ declare global {
     drawConnectors: any;
     drawLandmarks: any;
     HAND_CONNECTIONS: any;
+    updateKeyboardLayout?: (keys: KeyboardKey[]) => void;
   }
 }
 

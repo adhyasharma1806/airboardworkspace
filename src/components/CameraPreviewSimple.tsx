@@ -4,12 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Camera, EyeOff } from "lucide-react";
 import { useCamera } from "@/hooks/useCamera";
 import { useMediaPipe } from "@/hooks/useMediaPipe";
-import { useGestureRecognition } from "@/hooks/useGestureRecognition";
+import { useGestureRecognition, GestureRecognitionState } from "@/hooks/useGestureRecognition";
 import GestureOverlay from "./GestureOverlay";
 
 interface CameraPreviewSimpleProps {
   isTracking: boolean;
-  onGestureDetected?: (gesture: string) => void;
+  onGestureDetected?: (state: GestureRecognitionState) => void;
   onKeyType?: (key: string) => void;
   onBackspace?: () => void;
   onSpace?: () => void;
@@ -29,12 +29,20 @@ const CameraPreviewSimple = ({
 
   const { videoRef, state: cameraState } = useCamera(isTracking);
   
-  const { state, processHandLandmarks, resetDetection } = useGestureRecognition({
+  const { state, processHandLandmarks, resetDetection, setKeyboardLayout } = useGestureRecognition({
     onKeyType,
     onBackspace,
     onSpace,
-    onGestureChange: onGestureDetected
+    onGestureChange: (gesture) => {
+      // Pass the full state to parent
+      onGestureDetected?.(state);
+    }
   });
+
+  // Expose keyboard layout update to global scope
+  if (typeof window !== 'undefined') {
+    window.updateKeyboardLayout = setKeyboardLayout;
+  }
 
   const handleMediaPipeResults = useCallback((results: any) => {
     const canvas = canvasRef.current;
@@ -92,8 +100,18 @@ const CameraPreviewSimple = ({
           ctx.stroke();
         }
       }
+
+      // Notify parent with updated state
+      onGestureDetected?.(state);
     } else {
       resetDetection();
+      onGestureDetected?.({
+        currentGesture: 'none',
+        fingerPosition: null,
+        hoveredKey: null,
+        hoverProgress: 0,
+        isHandDetected: false
+      });
     }
 
     ctx.restore();
@@ -106,7 +124,7 @@ const CameraPreviewSimple = ({
       setFps(Math.round((30 * 1000) / elapsed));
       lastTimeRef.current = now;
     }
-  }, [processHandLandmarks, resetDetection, state]);
+  }, [processHandLandmarks, resetDetection, state, onGestureDetected]);
 
   useMediaPipe({
     videoRef,
