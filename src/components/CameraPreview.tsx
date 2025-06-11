@@ -1,18 +1,80 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Camera, Wifi } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CameraPreviewProps {
   isTracking: boolean;
+  onTrackingChange: (tracking: boolean) => void;
 }
 
-const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
+const CameraPreview = ({ isTracking, onTrackingChange }: CameraPreviewProps) => {
   const [handDetected, setHandDetected] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const { toast } = useToast();
+
+  const startCamera = async () => {
+    try {
+      setCameraError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        } 
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+      }
+      
+      toast({
+        title: "Camera connected",
+        description: "Camera is now active for hand tracking."
+      });
+    } catch (error) {
+      console.error('Camera access error:', error);
+      setCameraError('Camera access denied or not available');
+      onTrackingChange(false);
+      
+      toast({
+        title: "Camera access failed",
+        description: "Please allow camera access for hand tracking.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setHandDetected(false);
+  };
+
+  useEffect(() => {
+    if (isTracking) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => {
+      stopCamera();
+    };
+  }, [isTracking]);
 
   // Simulate hand detection for demo purposes
   useEffect(() => {
-    if (isTracking) {
+    if (isTracking && !cameraError) {
       const interval = setInterval(() => {
         setHandDetected(prev => !prev);
       }, 2000);
@@ -20,7 +82,7 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
     } else {
       setHandDetected(false);
     }
-  }, [isTracking]);
+  }, [isTracking, cameraError]);
 
   return (
     <Card className="glass-morphism border-cyber-primary/20 p-4">
@@ -32,41 +94,37 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
           </h3>
         </div>
         <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${isTracking ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${isTracking && !cameraError ? 'bg-green-400' : 'bg-gray-400'}`}></div>
           <span className="text-xs text-gray-400">
-            {isTracking ? 'Live' : 'Off'}
+            {isTracking && !cameraError ? 'Live' : 'Off'}
           </span>
         </div>
       </div>
 
       <div className="aspect-video bg-cyber-dark/50 rounded-lg border border-cyber-primary/30 relative overflow-hidden">
-        {isTracking ? (
+        {isTracking && !cameraError ? (
           <>
-            {/* Simulated camera feed */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cyber-dark/80 to-cyber-light/60">
-              <div className="absolute inset-0 opacity-20">
-                <div className="w-full h-full" style={{
-                  backgroundImage: `
-                    radial-gradient(circle at 30% 40%, rgba(0, 217, 255, 0.3) 0%, transparent 50%),
-                    radial-gradient(circle at 70% 60%, rgba(124, 58, 237, 0.3) 0%, transparent 50%)
-                  `
-                }}></div>
-              </div>
-              
-              {/* Hand tracking overlay */}
-              {handDetected && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-16 h-16 border-2 border-cyber-primary rounded-full cyber-glow animate-pulse">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-cyber-primary rounded-full"></div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-cyber-primary text-center mt-2 cyber-font">
-                    HAND DETECTED
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Hand tracking overlay */}
+            {handDetected && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="w-16 h-16 border-2 border-cyber-primary rounded-full cyber-glow animate-pulse">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-cyber-primary rounded-full"></div>
                   </div>
                 </div>
-              )}
-            </div>
+                <div className="text-xs text-cyber-primary text-center mt-2 cyber-font">
+                  HAND DETECTED
+                </div>
+              </div>
+            )}
 
             {/* Status indicators */}
             <div className="absolute top-2 left-2 space-y-1">
@@ -86,9 +144,11 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <EyeOff className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <div className="text-sm text-gray-400">Camera Off</div>
+              <div className="text-sm text-gray-400">
+                {cameraError ? 'Camera Error' : 'Camera Off'}
+              </div>
               <div className="text-xs text-gray-500 mt-1">
-                Enable tracking to start
+                {cameraError || 'Enable tracking to start'}
               </div>
             </div>
           </div>
@@ -99,13 +159,13 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
         <div className="bg-cyber-dark/50 p-2 rounded border border-cyber-primary/20">
           <div className="text-gray-400">FPS</div>
           <div className="text-cyber-primary font-mono">
-            {isTracking ? '30' : '0'}
+            {isTracking && !cameraError ? '30' : '0'}
           </div>
         </div>
         <div className="bg-cyber-dark/50 p-2 rounded border border-cyber-primary/20">
           <div className="text-gray-400">Latency</div>
           <div className="text-cyber-primary font-mono">
-            {isTracking ? '12ms' : '---'}
+            {isTracking && !cameraError ? '12ms' : '---'}
           </div>
         </div>
       </div>

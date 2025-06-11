@@ -3,20 +3,24 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, Eye, Settings, Zap, Save, FileText } from "lucide-react";
+import { ArrowLeft, Download, Eye, Settings, Zap, Save, FileText, Search, User, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import VirtualKeyboard from "./VirtualKeyboard";
 import CameraPreview from "./CameraPreview";
 import GestureControls from "./GestureControls";
+import AirBoardBrowser from "./AirBoardBrowser";
 
 interface AirBoardWorkspaceProps {
   onBack: () => void;
+  user?: { email: string; name: string } | null;
+  onSignOut?: () => void;
 }
 
-const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
+const AirBoardWorkspace = ({ onBack, user, onSignOut }: AirBoardWorkspaceProps) => {
   const [content, setContent] = useState('');
   const [isTracking, setIsTracking] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(true);
+  const [showBrowser, setShowBrowser] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -58,7 +62,6 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
         description: "Your notes have been exported as TXT file."
       });
     } else {
-      // PDF export would require a library like jsPDF
       toast({
         title: "PDF export",
         description: "PDF export feature coming soon!"
@@ -68,11 +71,11 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
 
   const toggleTracking = () => {
     setIsTracking(!isTracking);
-    toast({
-      title: isTracking ? "Tracking stopped" : "Tracking started",
-      description: isTracking ? "Hand tracking has been disabled." : "Hand tracking is now active."
-    });
   };
+
+  if (showBrowser) {
+    return <AirBoardBrowser onClose={() => setShowBrowser(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyber-darker via-cyber-dark to-cyber-light">
@@ -93,6 +96,17 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Browser Search Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBrowser(true)}
+              className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/10"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Browser
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -104,6 +118,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               <Eye className="w-4 h-4 mr-2" />
               {isTracking ? 'Tracking ON' : 'Tracking OFF'}
             </Button>
+            
             <Button
               variant="outline"
               size="sm"
@@ -112,6 +127,24 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
             >
               <Settings className="w-4 h-4" />
             </Button>
+
+            {/* User Menu */}
+            {user && (
+              <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center space-x-2 text-cyber-primary">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">{user.name}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSignOut}
+                  className="text-cyber-primary hover:bg-cyber-primary/10"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -167,7 +200,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
         {/* Sidebar */}
         <div className="w-80 p-6 space-y-6">
           {/* Camera Preview */}
-          <CameraPreview isTracking={isTracking} />
+          <CameraPreview isTracking={isTracking} onTrackingChange={setIsTracking} />
 
           {/* Gesture Controls */}
           <GestureControls />

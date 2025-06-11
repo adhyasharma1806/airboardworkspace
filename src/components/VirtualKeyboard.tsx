@@ -1,13 +1,16 @@
 
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Keyboard } from "lucide-react";
+import { Keyboard, Maximize, Minimize } from "lucide-react";
 
 interface VirtualKeyboardProps {
   onKeyPress: (key: string) => void;
 }
 
 const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
+  const [isEnlarged, setIsEnlarged] = useState(false);
+  
   const keyboardLayout = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -18,13 +21,26 @@ const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
     onKeyPress(key.toLowerCase());
   };
 
+  const keySize = isEnlarged ? 'min-w-12 h-12' : 'min-w-8 h-8';
+  const fontSize = isEnlarged ? 'text-base' : 'text-xs';
+
   return (
     <Card className="glass-morphism border-cyber-primary/20 p-4">
-      <div className="flex items-center mb-4">
-        <Keyboard className="w-5 h-5 text-cyber-primary mr-2" />
-        <h3 className="text-sm font-semibold cyber-font text-cyber-primary">
-          Virtual Keyboard
-        </h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Keyboard className="w-5 h-5 text-cyber-primary mr-2" />
+          <h3 className="text-sm font-semibold cyber-font text-cyber-primary">
+            Virtual Keyboard
+          </h3>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsEnlarged(!isEnlarged)}
+          className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20"
+        >
+          {isEnlarged ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -36,7 +52,7 @@ const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleKeyClick(key)}
-                className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow min-w-8 h-8 p-1 text-xs transition-all duration-200"
+                className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow ${keySize} p-1 ${fontSize} transition-all duration-200`}
               >
                 {key}
               </Button>
@@ -50,7 +66,7 @@ const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
             variant="outline"
             size="sm"
             onClick={() => onKeyPress('SPACE')}
-            className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 h-8 text-xs"
+            className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 ${isEnlarged ? 'h-12' : 'h-8'} ${fontSize}`}
           >
             SPACE
           </Button>
@@ -61,7 +77,7 @@ const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
             variant="outline"
             size="sm"
             onClick={() => onKeyPress('BACKSPACE')}
-            className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 h-8 text-xs"
+            className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 ${isEnlarged ? 'h-12' : 'h-8'} ${fontSize}`}
           >
             ⌫ BACK
           </Button>
@@ -69,7 +85,7 @@ const VirtualKeyboard = ({ onKeyPress }: VirtualKeyboardProps) => {
             variant="outline"
             size="sm"
             onClick={() => onKeyPress('ENTER')}
-            className="glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 h-8 text-xs"
+            className={`glass-morphism border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary/20 hover:cyber-glow flex-1 ${isEnlarged ? 'h-12' : 'h-8'} ${fontSize}`}
           >
             ↵ ENTER
           </Button>
