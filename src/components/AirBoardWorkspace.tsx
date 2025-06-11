@@ -50,7 +50,7 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = airboard-notes-${new Date().toISOString().split('T')[0]}.txt;
+      a.download = `airboard-notes-${new Date().toISOString().split('T')[0]}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -109,9 +109,9 @@ const AirBoardWorkspace = ({ onBack }: AirBoardWorkspaceProps) => {
               variant="outline"
               size="sm"
               onClick={toggleTracking}
-              className={glass-morphism border-cyber-primary/30 ${
-                isTracking ? 'text-green-400 border-green-400/30' : 'text-cyber-primary'
-              }}
+              className={`glass-morphism border-cyber-primary/30 ${
+  isTracking ? 'text-green-400 border-green-400/30' : 'text-cyber-primary'
+}`}
             >
               <Eye className="w-4 h-4 mr-2" />
               {isTracking ? 'Tracking ON' : 'Tracking OFF'}
