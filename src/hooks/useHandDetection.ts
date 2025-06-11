@@ -8,7 +8,7 @@ import { createHandsInstance } from '@/utils/mediaPipeUtils';
 import { createCameraInstance, startCamera, stopCamera } from '@/utils/cameraUtils';
 import { drawHandLandmarks, clearCanvas } from '@/utils/canvasUtils';
 
-export { HandGesture };
+export type { HandGesture };
 
 export const useHandDetection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
