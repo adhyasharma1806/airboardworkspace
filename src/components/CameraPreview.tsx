@@ -5,6 +5,7 @@ import { Eye, EyeOff, Camera, Wifi } from "lucide-react";
 
 interface CameraPreviewProps {
   isTracking: boolean;
+  handDetected: boolean;
 }
 
 declare global {
@@ -24,15 +25,7 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
   const handsRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (!isTracking) {
-      if (cameraRef.current) {
-        cameraRef.current.stop();
-      }
-      setHandDetected(false);
-      return;
-    }
-
+ 
     if (!window.Hands || !window.Camera) {
       console.error("MediaPipe scripts not loaded.");
       return;
