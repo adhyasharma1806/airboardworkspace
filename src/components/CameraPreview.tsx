@@ -50,37 +50,42 @@ const CameraPreview = ({ isTracking }: CameraPreviewProps) => {
       minTrackingConfidence: 0.7,
     });
 
-    hands.onResults((results: any) => {
-      console.log("onResults triggered", results);
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas) return;
+   hands.onResults((results: any) => {
+  console.log("🔥 MediaPipe onResults triggered!");
 
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+  if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+    console.log("🚫 No hand landmarks");
+    setHandDetected(false);
+    return;
+  }
 
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        setHandDetected(true);
-        for (const landmarks of results.multiHandLandmarks) {
-          window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
-            color: "#00FF00",
-            lineWidth: 2,
-          });
-          const gesture = classifyGesture(landmarks);
-console.log("Gesture Detected:", gesture);
+  setHandDetected(true);
+  const canvas = canvasRef.current;
+  const ctx = canvas?.getContext("2d");
+  if (!ctx || !canvas) return;
 
-          window.drawLandmarks(ctx, landmarks, {
-            color: "#FF0000",
-            lineWidth: 1,
-          });
-        }
-      } else {
-        setHandDetected(false);
-      }
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-      ctx.restore();
-    });
+  const landmarks = results.multiHandLandmarks[0]; // just test first hand
+  console.log("🖐️ Hand landmarks detected:", landmarks);
+
+  const gesture = classifyGesture(landmarks);
+  console.log("👉 Gesture Detected:", gesture);
+
+  window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, {
+    color: "#00FF00",
+    lineWidth: 2,
+  });
+  window.drawLandmarks(ctx, landmarks, {
+    color: "#FF0000",
+    lineWidth: 1,
+  });
+
+  ctx.restore();
+});
+
 
     const camera = new window.Camera(videoRef.current, {
       onFrame: async () => {
