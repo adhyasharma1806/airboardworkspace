@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,11 +27,11 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
   });
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
-  const { state: cameraState } = useCamera(isTracking);
+  // Use camera hook properly
+  const { videoRef, state: cameraState } = useCamera(isTracking);
 
   const handleNavigate = () => {
     if (!url) return;
@@ -91,28 +90,96 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
     handleRefresh();
   };
 
-  // Gesture action handlers
+  // Enhanced gesture action handlers with iframe scrolling
   const gestureActionHandlers = {
     onScrollUp: () => {
       setGestureActions(prev => ({ ...prev, scrollUp: prev.scrollUp + 1 }));
-      toast({ title: "Gesture", description: "Scrolling up" });
+      // Try multiple methods to scroll the iframe
+      if (iframeRef.current) {
+        try {
+          // Method 1: Direct iframe document access
+          const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
+          if (iframeDoc) {
+            iframeDoc.documentElement.scrollTop -= 100;
+            iframeDoc.body.scrollTop -= 100;
+          }
+          
+          // Method 2: PostMessage to iframe
+          iframeRef.current.contentWindow?.postMessage({ 
+            type: 'scroll', 
+            direction: 'up', 
+            amount: 100 
+          }, '*');
+          
+          console.log('📜 Scroll up executed');
+        } catch (error) {
+          console.log('❌ Scroll blocked by CORS:', error);
+        }
+      }
+      toast({ title: "Gesture", description: "Scrolling up", duration: 1000 });
     },
     onScrollDown: () => {
       setGestureActions(prev => ({ ...prev, scrollDown: prev.scrollDown + 1 }));
-      toast({ title: "Gesture", description: "Scrolling down" });
+      if (iframeRef.current) {
+        try {
+          const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
+          if (iframeDoc) {
+            iframeDoc.documentElement.scrollTop += 100;
+            iframeDoc.body.scrollTop += 100;
+          }
+          
+          iframeRef.current.contentWindow?.postMessage({ 
+            type: 'scroll', 
+            direction: 'down', 
+            amount: 100 
+          }, '*');
+          
+          console.log('📜 Scroll down executed');
+        } catch (error) {
+          console.log('❌ Scroll blocked by CORS:', error);
+        }
+      }
+      toast({ title: "Gesture", description: "Scrolling down", duration: 1000 });
     },
     onZoomIn: () => {
       setGestureActions(prev => ({ ...prev, zoomIn: prev.zoomIn + 1 }));
-      toast({ title: "Gesture", description: "Zooming in" });
+      if (iframeRef.current) {
+        try {
+          // Try to zoom iframe content
+          const iframe = iframeRef.current;
+          const currentScale = parseFloat(iframe.style.transform?.match(/scale\(([\d.]+)\)/)?.[1] || '1');
+          const newScale = Math.min(currentScale * 1.1, 3);
+          iframe.style.transform = `scale(${newScale})`;
+          iframe.style.transformOrigin = 'center center';
+          
+          console.log('🔍 Zoom in executed:', newScale);
+        } catch (error) {
+          console.log('❌ Zoom blocked:', error);
+        }
+      }
+      toast({ title: "Gesture", description: "Zooming in", duration: 1000 });
     },
     onZoomOut: () => {
       setGestureActions(prev => ({ ...prev, zoomOut: prev.zoomOut + 1 }));
-      toast({ title: "Gesture", description: "Zooming out" });
+      if (iframeRef.current) {
+        try {
+          const iframe = iframeRef.current;
+          const currentScale = parseFloat(iframe.style.transform?.match(/scale\(([\d.]+)\)/)?.[1] || '1');
+          const newScale = Math.max(currentScale * 0.9, 0.5);
+          iframe.style.transform = `scale(${newScale})`;
+          iframe.style.transformOrigin = 'center center';
+          
+          console.log('🔍 Zoom out executed:', newScale);
+        } catch (error) {
+          console.log('❌ Zoom blocked:', error);
+        }
+      }
+      toast({ title: "Gesture", description: "Zooming out", duration: 1000 });
     },
     onGoBack: () => {
       setGestureActions(prev => ({ ...prev, goBack: prev.goBack + 1 }));
       handleBack();
-      toast({ title: "Gesture", description: "Going back" });
+      toast({ title: "Gesture", description: "Going back", duration: 1000 });
     }
   };
 
@@ -123,11 +190,23 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
 
   const handleMediaPipeResults = useCallback((results: any) => {
     const canvas = canvasRef.current;
+    const video = videoRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas || !video) return;
+
+    // Set canvas size to match video
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
 
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    console.log('🎥 MediaPipe results:', {
+      hasLandmarks: !!(results.multiHandLandmarks && results.multiHandLandmarks.length > 0),
+      landmarkCount: results.multiHandLandmarks?.[0]?.length || 0,
+      canvasSize: `${canvas.width}x${canvas.height}`,
+      videoSize: `${video.videoWidth}x${video.videoHeight}`
+    });
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       const landmarks = results.multiHandLandmarks[0];
@@ -165,7 +244,7 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
     }
 
     ctx.restore();
-  }, [processHandLandmarks, resetDetection, gestureState]);
+  }, [processHandLandmarks, resetDetection, gestureState, videoRef]);
 
   useMediaPipe({
     videoRef,
@@ -187,8 +266,10 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
           </h2>
           {isTracking && (
             <div className="flex items-center space-x-1 bg-green-500/20 px-2 py-1 rounded text-xs">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-green-400">Gesture Control Active</span>
+              <div className={`w-2 h-2 rounded-full ${cameraState.isInitialized ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+              <span className={cameraState.isInitialized ? 'text-green-400' : 'text-yellow-400'}>
+                {cameraState.isInitialized ? 'Gesture Control Active' : 'Initializing Camera...'}
+              </span>
             </div>
           )}
         </div>
@@ -254,7 +335,7 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
         </div>
 
         {/* Gesture Action Indicators */}
-        {isTracking && (
+        {isTracking && cameraState.isInitialized && (
           <div className="flex items-center space-x-2 text-xs">
             <div className="flex items-center space-x-1">
               <ArrowUp className="w-3 h-3 text-cyber-primary" />
@@ -293,6 +374,7 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
             className="w-full h-full border-none"
             title="AirBoard Browser"
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            style={{ transformOrigin: 'center center' }}
           />
         </div>
 
@@ -304,25 +386,44 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
                 Gesture Control
               </h3>
               <div className="aspect-video bg-black relative rounded-lg overflow-hidden border border-cyber-primary/30">
-                <video
-                  ref={videoRef}
-                  className="absolute top-0 left-0 w-full h-full object-cover"
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas
-                  ref={canvasRef}
-                  width={320}
-                  height={240}
-                  className="absolute top-0 left-0 w-full h-full"
-                />
-                
-                {/* Gesture Status */}
-                {gestureState.isHandDetected && (
-                  <div className="absolute top-2 left-2 bg-black/70 rounded px-2 py-1">
-                    <div className="text-xs text-cyber-primary font-mono">
-                      {gestureState.currentGesture.toUpperCase()}
+                {cameraState.isInitialized ? (
+                  <>
+                    <video
+                      ref={videoRef}
+                      className="absolute top-0 left-0 w-full h-full object-cover scale-x-[-1]"
+                      autoPlay
+                      playsInline
+                      muted
+                    />
+                    <canvas
+                      ref={canvasRef}
+                      className="absolute top-0 left-0 w-full h-full scale-x-[-1]"
+                    />
+                    
+                    {/* Gesture Status */}
+                    {gestureState.isHandDetected && (
+                      <div className="absolute top-2 left-2 bg-black/70 rounded px-2 py-1">
+                        <div className="text-xs text-cyber-primary font-mono">
+                          {gestureState.currentGesture.toUpperCase()}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      {cameraState.error ? (
+                        <>
+                          <X className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                          <div className="text-sm text-red-400">Camera Error</div>
+                          <div className="text-xs text-red-300 mt-1">{cameraState.error}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-8 h-8 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                          <div className="text-sm text-cyber-primary">Initializing Camera...</div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -348,6 +449,16 @@ const AirBoardBrowser = ({ isOpen, onClose, isTracking }: AirBoardBrowserProps) 
                 <div className="text-gray-300">Reset zoom</div>
               </div>
             </div>
+
+            {/* Debug Info */}
+            {cameraState.isInitialized && (
+              <div className="mt-4 p-2 bg-black/50 rounded border border-cyber-primary/20 text-xs">
+                <div className="text-cyber-primary font-mono">Debug Info:</div>
+                <div className="text-gray-300">Hand: {gestureState.isHandDetected ? '✓' : '✗'}</div>
+                <div className="text-gray-300">Gesture: {gestureState.currentGesture}</div>
+                <div className="text-gray-300">Confidence: {Math.round(gestureState.gestureConfidence * 100)}%</div>
+              </div>
+            )}
           </div>
         )}
       </div>
